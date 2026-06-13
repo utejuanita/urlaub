@@ -9,7 +9,8 @@
 body{
     font-family: Arial, sans-serif;
     padding:20px;
-    background:#ffffff;
+    background:#fff;
+    color:#222;
 }
 
 h1{
@@ -17,37 +18,78 @@ h1{
 }
 
 #counter{
-    margin-bottom:20px;
+    font-size:18px;
     font-weight:bold;
+    margin-bottom:15px;
+}
+
+#legend{
+    margin-bottom:20px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+#legend span{
+    padding:4px 8px;
+    border-radius:4px;
+    border:1px solid #999;
+    font-size:12px;
+}
+
+.calendar-wrapper{
+    overflow-x:auto;
 }
 
 .calendar{
     display:grid;
     grid-template-columns: repeat(53, 14px);
-    grid-auto-rows:14px;
+    grid-template-rows: repeat(7, 14px);
     gap:2px;
+    padding:10px;
+    border:1px solid #ddd;
+    width:max-content;
 }
 
 .day{
     width:14px;
     height:14px;
-    background:#ffffff;
-    border:1px solid #ddd;
-    cursor:pointer;
+    border:1px solid rgba(0,0,0,0.08);
     box-sizing:border-box;
+    cursor:pointer;
+    transition:transform .1s;
 }
 
-.weekend,
+.day:hover{
+    transform:scale(1.15);
+    z-index:2;
+}
+
+.weekend{
+    background:#bdbdbd !important;
+}
+
 .holiday{
-    background:#cfcfcf;
+    background:#8a8a8a !important;
 }
 
 .selected{
     background:#ff0000 !important;
 }
 
-.day:hover{
-    outline:1px solid #333;
+.info{
+    margin-top:20px;
+    font-size:14px;
+    line-height:1.6;
+}
+
+.legend-box{
+    width:14px;
+    height:14px;
+    display:inline-block;
+    vertical-align:middle;
+    margin-right:5px;
+    border:1px solid #999;
 }
 </style>
 </head>
@@ -59,12 +101,61 @@ h1{
 Markiert: <span id="used">0</span> / 30
 </div>
 
-<div class="calendar" id="calendar"></div>
+<div id="legend">
+    <span style="background:#FFE5E5;">Jan</span>
+    <span style="background:#FFF0D9;">Feb</span>
+    <span style="background:#FFFACD;">Mär</span>
+    <span style="background:#E8FFD8;">Apr</span>
+    <span style="background:#D8FFE8;">Mai</span>
+    <span style="background:#D8FFF8;">Jun</span>
+    <span style="background:#D8F0FF;">Jul</span>
+    <span style="background:#D8E8FF;">Aug</span>
+    <span style="background:#E8D8FF;">Sep</span>
+    <span style="background:#F5D8FF;">Okt</span>
+    <span style="background:#FFD8F0;">Nov</span>
+    <span style="background:#F0F0F0;">Dez</span>
+</div>
+
+<div class="calendar-wrapper">
+    <div id="calendar" class="calendar"></div>
+</div>
+
+<div class="info">
+    <div>
+        <span class="legend-box" style="background:#ff0000;"></span>
+        Ausgewählter Tag
+    </div>
+
+    <div>
+        <span class="legend-box" style="background:#bdbdbd;"></span>
+        Wochenende
+    </div>
+
+    <div>
+        <span class="legend-box" style="background:#8a8a8a;"></span>
+        Feiertag
+    </div>
+</div>
 
 <script>
 
 const MAX_SELECTIONS = 30;
 let selectedCount = 0;
+
+const monthColors = [
+    "#FFE5E5", // Januar
+    "#FFF0D9", // Februar
+    "#FFFACD", // März
+    "#E8FFD8", // April
+    "#D8FFE8", // Mai
+    "#D8FFF8", // Juni
+    "#D8F0FF", // Juli
+    "#D8E8FF", // August
+    "#E8D8FF", // September
+    "#F5D8FF", // Oktober
+    "#FFD8F0", // November
+    "#F0F0F0"  // Dezember
+];
 
 const holidays = new Set([
     "2026-01-01",
@@ -84,17 +175,30 @@ const holidays = new Set([
 const calendar = document.getElementById("calendar");
 const used = document.getElementById("used");
 
-const start = new Date("2026-01-01");
-const end = new Date("2026-12-31");
+const startDate = new Date("2026-01-01");
+const endDate = new Date("2026-12-31");
 
-for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+for(let date = new Date(startDate);
+    date <= endDate;
+    date.setDate(date.getDate()+1))
+{
 
     const day = document.createElement("div");
     day.classList.add("day");
 
-    const iso = d.toISOString().split("T")[0];
+    const current = new Date(date);
 
-    const weekday = d.getDay();
+    const iso =
+        current.toISOString().split("T")[0];
+
+    const month =
+        current.getMonth();
+
+    day.style.backgroundColor =
+        monthColors[month];
+
+    const weekday =
+        current.getDay();
 
     if(weekday === 0 || weekday === 6){
         day.classList.add("weekend");
@@ -104,42 +208,60 @@ for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
         day.classList.add("holiday");
     }
 
-    const firstDay = new Date(d.getFullYear(),0,1);
+    const firstDay =
+        new Date(2026,0,1);
 
-    const dayNumber =
+    const dayOfYear =
         Math.floor(
-            (d - firstDay) / 86400000
+            (current - firstDay) / 86400000
         );
 
     const week =
         Math.floor(
-            (dayNumber + firstDay.getDay()) / 7
+            (dayOfYear + firstDay.getDay()) / 7
         );
 
-    let row = weekday === 0 ? 6 : weekday - 1;
+    const row =
+        weekday === 0
+        ? 6
+        : weekday - 1;
 
-    day.style.gridColumn = week + 1;
-    day.style.gridRow = row + 1;
+    day.style.gridColumn =
+        week + 1;
+
+    day.style.gridRow =
+        row + 1;
 
     day.title = iso;
 
     day.addEventListener("click", () => {
 
         if(day.classList.contains("selected")){
+
             day.classList.remove("selected");
             selectedCount--;
-            used.textContent = selectedCount;
+
+            used.textContent =
+                selectedCount;
+
             return;
         }
 
         if(selectedCount >= MAX_SELECTIONS){
-            alert("Maximal 30 Tage auswählbar.");
+
+            alert(
+                "Maximal 30 Tage können markiert werden."
+            );
+
             return;
         }
 
         day.classList.add("selected");
+
         selectedCount++;
-        used.textContent = selectedCount;
+
+        used.textContent =
+            selectedCount;
 
     });
 
