@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jahreskalender 2026</title>
+
+<style>
+body{
+    font-family: Arial, sans-serif;
+    padding:20px;
+    background:#ffffff;
+}
+
+h1{
+    margin-bottom:10px;
+}
+
+#counter{
+    margin-bottom:20px;
+    font-weight:bold;
+}
+
+.calendar{
+    display:grid;
+    grid-template-columns: repeat(53, 14px);
+    grid-auto-rows:14px;
+    gap:2px;
+}
+
+.day{
+    width:14px;
+    height:14px;
+    background:#ffffff;
+    border:1px solid #ddd;
+    cursor:pointer;
+    box-sizing:border-box;
+}
+
+.weekend,
+.holiday{
+    background:#cfcfcf;
+}
+
+.selected{
+    background:#ff0000 !important;
+}
+
+.day:hover{
+    outline:1px solid #333;
+}
+</style>
+</head>
+<body>
+
+<h1>Jahreskalender 2026</h1>
+
+<div id="counter">
+Markiert: <span id="used">0</span> / 30
+</div>
+
+<div class="calendar" id="calendar"></div>
+
+<script>
+
+const MAX_SELECTIONS = 30;
+let selectedCount = 0;
+
+const holidays = new Set([
+    "2026-01-01",
+    "2026-01-06",
+    "2026-04-03",
+    "2026-04-06",
+    "2026-05-01",
+    "2026-05-14",
+    "2026-05-25",
+    "2026-06-04",
+    "2026-10-03",
+    "2026-11-01",
+    "2026-12-25",
+    "2026-12-26"
+]);
+
+const calendar = document.getElementById("calendar");
+const used = document.getElementById("used");
+
+const start = new Date("2026-01-01");
+const end = new Date("2026-12-31");
+
+for(let d = new Date(start); d <= end; d.setDate(d.getDate()+1)){
+
+    const day = document.createElement("div");
+    day.classList.add("day");
+
+    const iso = d.toISOString().split("T")[0];
+
+    const weekday = d.getDay();
+
+    if(weekday === 0 || weekday === 6){
+        day.classList.add("weekend");
+    }
+
+    if(holidays.has(iso)){
+        day.classList.add("holiday");
+    }
+
+    const firstDay = new Date(d.getFullYear(),0,1);
+
+    const dayNumber =
+        Math.floor(
+            (d - firstDay) / 86400000
+        );
+
+    const week =
+        Math.floor(
+            (dayNumber + firstDay.getDay()) / 7
+        );
+
+    let row = weekday === 0 ? 6 : weekday - 1;
+
+    day.style.gridColumn = week + 1;
+    day.style.gridRow = row + 1;
+
+    day.title = iso;
+
+    day.addEventListener("click", () => {
+
+        if(day.classList.contains("selected")){
+            day.classList.remove("selected");
+            selectedCount--;
+            used.textContent = selectedCount;
+            return;
+        }
+
+        if(selectedCount >= MAX_SELECTIONS){
+            alert("Maximal 30 Tage auswählbar.");
+            return;
+        }
+
+        day.classList.add("selected");
+        selectedCount++;
+        used.textContent = selectedCount;
+
+    });
+
+    calendar.appendChild(day);
+}
+
+</script>
+
+</body>
+</html>
